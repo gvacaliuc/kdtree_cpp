@@ -6,6 +6,7 @@
 #include <string>
 #include <cstring>
 #include "assert.h"
+#include "neighbor.h"
 
 /*	This file defines the class laid out in 'kdtree.h'.  It contains methods
 for constructing a kd-tree type structure from a vector of kdnodes.  The
@@ -23,7 +24,7 @@ thinking and methodology of these two classes is as follows:
 
 	Please refer to these class member functions for more of the intricacies.
 
-	- Gabriel Vacaliuc - edited - 06/18/15
+	- Gabriel Vacaliuc - edited - 06/22/15
 */
 
 // kdtree constructor
@@ -154,6 +155,7 @@ int kdtree::treeGen(std::vector<kdnode> nodes, int start, int end, int level, in
 	// 	Creates a leaf node
 	else if (numSamples == 1){
 		idx = nodes[start].getidx();
+		this->nodes[idx].setLevel(level);
 		this->nodes[idx].assignChild(-1, 0);
 		this->nodes[idx].assignChild(-1, 1);
 		this->nodes[idx].assignParent(parent);
@@ -213,30 +215,51 @@ void kdtree::printTree(){
 
 // Public nearest neighbor function
 std::vector<int> kdtree::getNN(int numNeigh, std::vector<double> point, int dim){
-	assert(this->dim == dim);
-	return kdtree::nearestNeighbors(numNeigh, point);
+	assert(this->dim == dim && point.size() == dim && numNeigh < this->nodes.size());
+	neighborArray neighbors;
+	neighbors = this->nearestNeighbors(numNeigh, point );
+	std::vector<int> indices (numNeigh);
+	int i;
+	for (i = 0; i < numNeigh; i++){
+	//	printf("2idx %u: %u\n", i, neighbors[i].getIdx());
+		indices[i] = neighbors[i].getIdx();
+	}
+	return indices;
 };
 
 // Public nearest neighbor function
 std::vector<int> kdtree::getNN(int numNeigh, int idx){
-	assert(idx > 0 && idx < this->nodes.size());
-	return kdtree::nearestNeighbors(numNeigh, this->nodes[idx].getPointVal());
+	assert(idx > 0 && idx < this->nodes.size() && numNeigh < this->nodes.size());
+	neighborArray neighbors;
+	neighbors = this->nearestNeighbors(numNeigh, this->nodes[idx].getPointVal() );
+	std::vector<int> indices (numNeigh);
+	int i;
+	for (i = 0; i < numNeigh; i++){
+		indices[i] = neighbors[i].getIdx();
+	}
+	return indices;
 };
 
 // Private neighbor function
-std::vector<neighbor> kdtree::nearestNeighbors(int numNeigh, std::vector<double> point){
-	std::vector<neighbor> neighbors[numNeigh];
-	
+neighborArray kdtree::nearestNeighbors(int numNeigh, std::vector<double> point){
+	neighborArray neighbors;
+	neighbors = neighborArray(numNeigh);
+	int i;
+	int leaf = this->getNearestLeaf(point, this->getRootNode());
+	neighbors = this->initNeighbors(neighbors, numNeigh, point);
+	this->traverseUp(point, &neighbors, leaf, -1, this->getRootNode() );
+	return neighbors;
 };
 
-int getNearestLeaf(std::vector<double> point, int idx){
+int kdtree::getNearestLeaf(std::vector<double> point, int idx){
 	if (this->nodes[idx].isLeaf()){
+		//printf("leaf_idx: %u\n", idx);		
 		return idx;
 	}
-	bool greaterThan = point[this->nodes[idx].getLevel()] >= this->nodes[idx].getPointVal(this->nodes[idx].getLevel());
 	else{
-		if ( greaterThan ){ return this->nodes[idx].getChild(1); }
-		else{ return this->nodes[idx].getChild(0); }
+		bool greaterThan = point[this->nodes[idx].getLevel()] >= this->nodes[idx].getPointVal(this->nodes[idx].getLevel());
+		if ( greaterThan ){ return getNearestLeaf(point, this->nodes[idx].getChild(1)); }
+		else{ return getNearestLeaf(point, this->nodes[idx].getChild(0)); }
 	}
 };
 
@@ -258,18 +281,64 @@ int kdtree::getOtherChild(int parent, int child){
 	else{ return leftChild; }
 };
 
-void kdtree::traverseUp(std::vector<double> point, std::vector<int> neighbors, int node_idx){
-	int parent = this->nodes[node_idx].getParent();
-	if (parent != -1){
-		int level = this->nodes[parent].getLevel();
-		if ( kdtree::distsquared(this->nodes[parent].getPointVal(), point) < max(neighbors) ){
-			insert(neighbors, parent);
+void kdtree::traverseUp(std::vector<double> point, neighborArray *neighbors, int now_idx, int from_idx, int root_idx){
+	int node = now_idx,i;
+	printf("node: %u\n", node);
+	printf("rootidx: %u\n", root_idx);
+	double dist;
+	if (node == this->getRootNode()){
+		dist = kdtree::distsquared(this->nodes[node].getPointVal(), point);
+		printf("max dist: %f\n", neighbors->getMaxDist() );
+		printf("dist: %f\n", dist );		
+		if ( dist < neighbors->getMaxDist() ){
+			printf("1\n");
+			neighbor n;
+			n.setIdx(node);
+			n.setDist(dist);
+			n.setPoint(this->nodes[node].getPointVal());
+			neighbors->insert(n);
 		}
-		distToHP = std::abs( this->nodes[parent].getPointVal(level) - point[level] );
-		if ( distToHP < max(neighbors) ){
-			traverseUp(point, neighbors, this->getNearestLeaf( point, this->getOtherChild(parent, node_idx) ));
+	}
+	else if (node != root_idx){
+		int level = this->nodes[node].getLevel();
+		printf("level: %u\n", level);
+		dist = kdtree::distsquared(this->nodes[node].getPointVal(), point);
+		printf("max dist: %f\n", neighbors->getMaxDist() );
+		if ( dist < neighbors->getMaxDist() ){
+			printf("1\n");
+			neighbor n;
+			n.setIdx(node);
+			n.setDist(dist);
+			n.setPoint(this->nodes[node].getPointVal());
+			neighbors->insert(n);
 		}
-		traverseUp(point, neighbors, parent);
+		double distToHP = std::pow( (this->nodes[node].getPointVal(level) - point[level]), 2.0 );
+		printf("disttohp2: %f\n", distToHP );
+		if ( distToHP < neighbors->getMaxDist() && from_idx != -1 && this->getOtherChild(node, from_idx) != -1){
+			printf("2\n");
+			traverseUp(point, neighbors, this->getNearestLeaf( point, this->getOtherChild(node, from_idx) ), -1, node);		
+		}
+		printf("3\n");
+		traverseUp(point, neighbors, this->nodes[node].getParent(), node, root_idx);
+	}
+	else if (node != this->getRootNode()){
+		printf("4\n");
+		traverseUp(point, neighbors, this->nodes[node].getParent(), node, root_idx); 
+	}
+};
+
+neighborArray kdtree::initNeighbors(neighborArray neighbors, int numNeigh, std::vector<double> point){
+	int i;
+	double dist;
+	for (i = 0; i < numNeigh; i++){
+		neighbor n;
+		n.setIdx(i);
+		dist = kdtree::distsquared(this->nodes[i].getPointVal(), point);
+		n.setDist(dist);
+		n.setPoint(this->nodes[i].getPointVal());
+		//printf("idx %u: %u\n", i, n.getIdx());
+		//printf("dist %u: %f\n", i, n.getDist());
+		neighbors.insert(n);
 	}
 	return neighbors;
 };

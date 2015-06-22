@@ -18,6 +18,7 @@ class kdnode{
 		int getdim();
 		void setLevel(int level);
 		bool isLeaf();
+		int getLevel();
 	private:
 		std::vector<double> point;
 		int parent;

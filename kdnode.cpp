@@ -22,7 +22,7 @@
 
 	Please refer to these class member functions for more of the intricacies.
 
-	- Gabriel Vacaliuc - edited - 06/18/15
+	- Gabriel Vacaliuc - edited - 06/22/15
 */
 
 // kdnode constructor 
@@ -107,5 +107,9 @@ void kdnode::setLevel(int level){
 };
 
 bool kdnode::isLeaf(){
-	return (this->leftChild == -1 && this->rightChild == -1);
+	return (this->left == -1 && this->right == -1);
+};
+
+int kdnode::getLevel(){
+	return this->level;
 };

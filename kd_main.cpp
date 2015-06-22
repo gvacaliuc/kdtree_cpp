@@ -4,12 +4,13 @@
 #include "kdnode.h"
 #include <vector>
 #include "kdtree.h"
+#include "neighbor.h"
 
 /*	Primitive main class that reads numpy file in, creates and prints tree.
 	Eventually this will all be wrapped in C, then fortran, then compiled as a
 	shared object that is readable/implementable (words?) in python.
 
-	- Gabriel Vacaliuc - edited - 06/18/15
+	- Gabriel Vacaliuc - edited - 06/22/15
 */
 
 int main(){
@@ -17,11 +18,11 @@ int main(){
 	cnpy::NpyArray arr = cnpy::npy_load("kd_data.npy");
 	double* arr_data = reinterpret_cast<double*>(arr.data);
 	int i, j;
-	std::vector<unsigned int> shape;	//If data stored correctly
+/*	std::vector<unsigned int> shape;	//If data stored correctly
 	shape = arr.shape;
 	int a = shape[0], b = shape[1];
-	const int dim = a, numSamples = b;
-//	const int dim = 2, numSamples = 6;
+	const int dim = a, numSamples = b;*/
+	const int dim = 2, numSamples = 6;
 	std::vector<double> temp (dim);   // used to put values in nodes
 	kdnode node_data[numSamples];
 
@@ -49,4 +50,11 @@ int main(){
 	}
 	tree.build(); 
 	tree.printTree();
+	std::vector<double> point (2,5.0);
+	std::vector<int> nn_indices = tree.getNN(4, point, 2);
+	for (i = 0; i < 4; i++){
+//		tree.getNode(nn_indices[i]).printPointVal();
+		printf("Idx %u: %u\n", i+1, nn_indices[i]); 	
+	}
+	return 0;
 }
