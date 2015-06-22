@@ -89,11 +89,11 @@ std::vector<double> kdnode::getPointVal(){
 //	Prints the node's point out -- debugging
 void kdnode::printPointVal(){
 	int i = 0;
-	printf("Point: (%2.1f,",point[0]);
+	printf("Point: (%2.5f,",point[0]);
 	for( i = 1; i < dim-1; i++){
-		printf("%2.1f,", point[i]);
+		printf("%2.5f,", point[i]);
 	}
-	printf("%2.1f)\n", point[dim-1]);
+	printf("%2.5f)\n", point[dim-1]);
 };
 
 //	Returns the node's dimension
