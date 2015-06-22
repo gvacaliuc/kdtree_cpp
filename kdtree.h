@@ -5,6 +5,8 @@
 #include <vector>
 #include "neighbor.h"
 
+/*	These functions and variables are better explained in "kdtree.cpp" */
+
 class kdtree{
 	public:
 		kdtree();
@@ -12,19 +14,19 @@ class kdtree{
 		int getRootNode();
 		void build();
 		kdnode getNode(int idx);
-		void printTree(); 																				//Public function to print out tree (2-Dim REQ!)
-		std::vector<int> getNN(int numNeigh, std::vector<double>, int dim);								//Nearest Neighbors of an input vector
+		void printTree();
+		std::vector<int> getNN(int numNeigh, std::vector<double>, int dim);
 		std::vector<int> getNN(int numNeigh, int idx);
-		static void quickSort(double arr[], int l, int h, int nS);										//Nearest Neighbors of node in tree
+		static void quickSort(double arr[], int l, int h, int nS);
 	private:
 		int numSamples;
 		int dim;
 		std::vector<kdnode> nodes;
-		int root; 																						//idx for root node
-		static void swap(double* a, double* b); 														//These three do an argsort on the data
+		int root; 														
+		static void swap(double* a, double* b);
 		static int partition (double arr[], int l, int h, int nS);		
-		static std::vector<kdnode> sortNodes(std::vector<kdnode> data, int start, int end, int level); 	//Calls above static functions
-		static int getMedian(int numSamples); 															//simple helper function
+		static std::vector<kdnode> sortNodes(std::vector<kdnode> data, int start, int end, int level);
+		static int getMedian(int numSamples);
 		int treeGen(std::vector<kdnode> nodes, int start, int end, int level, int parent);
 		void treeWalk(int idx, int level);
 		double getPointVal(int idx, int level);
@@ -32,7 +34,7 @@ class kdtree{
 		static double distsquared(std::vector<double> a, std::vector<double> b);
 		int getOtherChild(int parent, int child);
 		void traverseUp(std::vector<double> point, neighborArray *neighbors, int now_idx, int from_idx, int root_idx);
-		neighborArray nearestNeighbors(int numNeigh, std::vector<double> point);						//Private neighbor function calling traverseUp recursively
+		neighborArray nearestNeighbors(int numNeigh, std::vector<double> point);
 		neighborArray initNeighbors(neighborArray neighbors, int numNeigh, std::vector<double> point);
 };
 #endif

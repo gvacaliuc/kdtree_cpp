@@ -3,36 +3,45 @@
 #include "kdtree.h"
 #include <stdio.h>
 
+//	Identifies the neighbor as un-initialized
 neighbor::neighbor(){
-	this->dist = -1.0; // Identifies neighbor as not set up yet
+	this->dist = -1.0;
 };
 
+//	Sets index
 void neighbor::setIdx(int idx){
 	this->idx = idx;
 };
 
+//	Sets distance
 void neighbor::setDist(double dist){
 	this->dist = dist;
 };
 
+//	Sets point
 void neighbor::setPoint(std::vector<double> point){
 	this->point = point;
 };
 
+//	Gets index
 int neighbor::getIdx(){
 	return this->idx;
 };
 
+//	Gets distance
 double neighbor::getDist(){
 	return this->dist;
 };
 
+//	Gets point
 std::vector<double> neighbor::getPoint(){
 	return this->point;
 };
 
+//	Blank constructor
 neighborArray::neighborArray(){};
 
+//	Constructor, sets distance to -1 to id as uninitialized
 neighborArray::neighborArray(int n){
 	std::vector<neighbor> neigh (n);
 	int i;
@@ -40,33 +49,32 @@ neighborArray::neighborArray(int n){
 		neigh[i].setDist(-1.0);
 	}
 	neighbors = neigh;
-	for (i = 0; i < n; i++){
-//		printf("dist %f\n", neighbors[i].getDist());
-	}
 };
 
+//	operator[] to ease use of neighborArray
 neighbor& neighborArray::operator[](int i){
-	assert( i < this->neighbors.size() );
+	assert( i >= 0 && i < this->neighbors.size() );
 	return this->neighbors[i];
 };
 
+//	returns where the first actual neighbor lies -- (only used in neighbor initializer)
 int neighborArray::getMinIdx(){
 	int idx = 0, i;
 	for (i = 0; i < this->neighbors.size(); i++){
-	//	printf("mindex: %u\n", idx);
 		if (this->neighbors[i].getDist() == -1.0){ idx++; }
 		else{ break; return idx; }
 	}
-	//printf("returned idx: %u\n", idx);
 	return idx;
 };
 
+//	returns the largest distance in a neighborArray
 double neighborArray::getMaxDist(){
 	this->sortNeighbors();
 	int size = this->neighbors.size();
 	return this->neighbors[size - 1].getDist();
 };
 
+//	sorts the neighbors based on dist^2
 void neighborArray::sortNeighbors(){
 	int numneigh = this->neighbors.size();
 	double* arr = new double[numneigh*2];
@@ -79,9 +87,6 @@ void neighborArray::sortNeighbors(){
 	neighborArray temp;
 	temp = neighborArray(numneigh);
 	for (i = 0; i < numneigh; i++){
-	//	printf("sorted index: %u\n", (int) arr[i+numneigh]);
-	}
-	for (i = 0; i < numneigh; i++){
 		temp[i] = this->neighbors[ (int) arr[i+numneigh] ];
 	}
 	for (i = 0; i < numneigh; i++){
@@ -91,6 +96,7 @@ void neighborArray::sortNeighbors(){
 	delete[] arr;
 };
 
+//	inserts a value into the neighborArray, rejects duplicates
 void neighborArray::insert(neighbor n){
 	//printf("mindex: %u\n", this->getMinIdx());	
 	if (this->getMinIdx() != 0){
@@ -110,6 +116,7 @@ void neighborArray::insert(neighbor n){
 	}
 };
 
+//	returns the size of the neighbor array
 int neighborArray::size(){
 	return this->neighbors.size();
 };

@@ -90,7 +90,7 @@ std::vector<kdnode> kdtree::sortNodes(std::vector<kdnode> data, int start, int e
 			arr[i] = data[i+start].getPointVal(level);
 			arr[i+numSamples] = (double) i+start;
 		}
-		quickSort(arr, 0, numSamples - 1, numSamples); // Modified quicksorter to do argument sorting
+		quickSort(arr, 0, numSamples - 1, numSamples);	// Modified quicksorter to do argument sorting
 
 		for(i = 0; i < numSamples; i++){				//Could be implemented to be more memory efficient
 			temp[i] = data[ (int) arr[numSamples + i] ];
@@ -170,11 +170,13 @@ int kdtree::treeGen(std::vector<kdnode> nodes, int start, int end, int level, in
 kdnode kdtree::getNode(int idx){
 	return this->nodes[idx];
 };
+
 // Returns the value of a node in tree
 double kdtree::getPointVal(int idx, int level){
 	return this->nodes[idx].getPointVal(level);
 };
-// Recursive tree printing 
+
+// Private recursive tree printing 
 void kdtree::treeWalk(int idx, int level){
 	assert(this->dim == 2);
 	int i = 0;
@@ -216,14 +218,17 @@ void kdtree::printTree(){
 // Public nearest neighbor function
 std::vector<int> kdtree::getNN(int numNeigh, std::vector<double> point, int dim){
 	assert(this->dim == dim && point.size() == dim && numNeigh < this->nodes.size());
+	int i;	
 	neighborArray neighbors;
+
+//	Calls private NN function
 	neighbors = this->nearestNeighbors(numNeigh, point );
 	std::vector<int> indices (numNeigh);
-	int i;
+
 	for (i = 0; i < numNeigh; i++){
-	//	printf("2idx %u: %u\n", i, neighbors[i].getIdx());
 		indices[i] = neighbors[i].getIdx();
 	}
+
 	return indices;
 };
 
@@ -231,12 +236,16 @@ std::vector<int> kdtree::getNN(int numNeigh, std::vector<double> point, int dim)
 std::vector<int> kdtree::getNN(int numNeigh, int idx){
 	assert(idx > 0 && idx < this->nodes.size() && numNeigh < this->nodes.size());
 	neighborArray neighbors;
+	int i;
+
+//	Calls private NN function
 	neighbors = this->nearestNeighbors(numNeigh, this->nodes[idx].getPointVal() );
 	std::vector<int> indices (numNeigh);
-	int i;
+
 	for (i = 0; i < numNeigh; i++){
 		indices[i] = neighbors[i].getIdx();
 	}
+
 	return indices;
 };
 
@@ -245,15 +254,22 @@ neighborArray kdtree::nearestNeighbors(int numNeigh, std::vector<double> point){
 	neighborArray neighbors;
 	neighbors = neighborArray(numNeigh);
 	int i;
+
+//	Gets a 'best-guess' leaf
 	int leaf = this->getNearestLeaf(point, this->getRootNode());
+
+//	Initializes the nearest neighbors array as the first N neighbors in tree
 	neighbors = this->initNeighbors(neighbors, numNeigh, point);
+
+//	Calls recursive function and passes a reference to neighbors
 	this->traverseUp(point, &neighbors, leaf, -1, this->getRootNode() );
 	return neighbors;
 };
 
+//	Returns if is leaf, otherwise finds the correct side of splitting Hyper-
+//	Plane (favoring the right).
 int kdtree::getNearestLeaf(std::vector<double> point, int idx){
-	if (this->nodes[idx].isLeaf()){
-		//printf("leaf_idx: %u\n", idx);		
+	if (this->nodes[idx].isLeaf()){	
 		return idx;
 	}
 	else{
@@ -263,6 +279,7 @@ int kdtree::getNearestLeaf(std::vector<double> point, int idx){
 	}
 };
 
+//	Returns the distance squared between two points (so we don't have to do root finding)
 double kdtree::distsquared(std::vector<double> a, std::vector<double> b){
 	assert(a.size() == b.size());	
 	double distsquared = 0;
@@ -273,6 +290,7 @@ double kdtree::distsquared(std::vector<double> a, std::vector<double> b){
 	return distsquared;
 };
 
+//	Returns the idx of a parent's other child given the parent and one child
 int kdtree::getOtherChild(int parent, int child){
 	int leftChild = this->nodes[parent].getChild(0);
 	int rightChild = this->nodes[parent].getChild(1);
@@ -281,29 +299,21 @@ int kdtree::getOtherChild(int parent, int child){
 	else{ return leftChild; }
 };
 
+//	Recursive function to find nearest neighbors, neighbors points to the memory allocated for the NN
 void kdtree::traverseUp(std::vector<double> point, neighborArray *neighbors, int now_idx, int from_idx, int root_idx){
 	int node = now_idx,i;
-	printf("node: %u\n", node);
-	printf("rootidx: %u\n", root_idx);
 	double dist;
-	if (node == this->getRootNode()){
-		dist = kdtree::distsquared(this->nodes[node].getPointVal(), point);
-		printf("max dist: %f\n", neighbors->getMaxDist() );
-		printf("dist: %f\n", dist );		
-		if ( dist < neighbors->getMaxDist() ){
-			printf("1\n");
-			neighbor n;
-			n.setIdx(node);
-			n.setDist(dist);
-			n.setPoint(this->nodes[node].getPointVal());
-			neighbors->insert(n);
-		}
-	}
-	else if (node != root_idx){
+	printf("node: %u\n", node);
+	printf("root: %u\n", root_idx);
+
+//	Checks to make sure node passed is not the local root
+	if (node != root_idx){
 		int level = this->nodes[node].getLevel();
 		printf("level: %u\n", level);
 		dist = kdtree::distsquared(this->nodes[node].getPointVal(), point);
 		printf("max dist: %f\n", neighbors->getMaxDist() );
+
+	//	Adds node to neighbors if the the distance from node to point is lower than the max distance in neighbors
 		if ( dist < neighbors->getMaxDist() ){
 			printf("1\n");
 			neighbor n;
@@ -314,19 +324,43 @@ void kdtree::traverseUp(std::vector<double> point, neighborArray *neighbors, int
 		}
 		double distToHP = std::pow( (this->nodes[node].getPointVal(level) - point[level]), 2.0 );
 		printf("disttohp2: %f\n", distToHP );
+
+	//	Checks the other subtree of node if the largest distance is greater than the distance to the hyperplane
 		if ( distToHP < neighbors->getMaxDist() && from_idx != -1 && this->getOtherChild(node, from_idx) != -1){
 			printf("2\n");
 			traverseUp(point, neighbors, this->getNearestLeaf( point, this->getOtherChild(node, from_idx) ), -1, node);		
 		}
+
+	//	If node is not global root and not local root move up a level
+		if ( node != this->getRootNode() ){
 		printf("3\n");
 		traverseUp(point, neighbors, this->nodes[node].getParent(), node, root_idx);
+		}
 	}
+//	If node is not global root but is local root then move up a level
 	else if (node != this->getRootNode()){
 		printf("4\n");
 		traverseUp(point, neighbors, this->nodes[node].getParent(), node, root_idx); 
 	}
+//	If node is global root
+	else if (node == this->getRootNode()){
+		dist = kdtree::distsquared(this->nodes[node].getPointVal(), point);
+		printf("max dist: %f\n", neighbors->getMaxDist() );
+		printf("dist: %f\n", dist );
+
+	//	If root is closer than the furthest neighbor		
+		if ( dist < neighbors->getMaxDist() ){
+			printf("1\n");
+			neighbor n;
+			n.setIdx(node);
+			n.setDist(dist);
+			n.setPoint(this->nodes[node].getPointVal());
+			neighbors->insert(n);
+		}
+	}
 };
 
+//	Initializes a neighborArray of numNeigh length with the first k-NN 
 neighborArray kdtree::initNeighbors(neighborArray neighbors, int numNeigh, std::vector<double> point){
 	int i;
 	double dist;

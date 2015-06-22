@@ -3,14 +3,16 @@
 
 #include <vector>
 
+/* These functions are better explained in kdnode.cpp */
+
 class kdnode{
 	public:
 		kdnode();
 		kdnode(std::vector<double> pt, int id, int d);
 		int getParent();
-		int getChild(int direction); // 0 for left child, 1 for right
+		int getChild(int direction); 					// 0 for left child, 1 for right
 		void assignParent(int p);
-		void assignChild(int c, int direction); // 0 for left child, 1 for right
+		void assignChild(int c, int direction); 		// 0 for left child, 1 for right
 		int getidx();
 		double getPointVal(int level);
 		std::vector<double> getPointVal();

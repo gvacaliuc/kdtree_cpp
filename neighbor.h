@@ -4,6 +4,8 @@
 #include <vector>
 #include "kdtree.h"
 
+/* These functions and variables are better explained in "neighbor.cpp" */
+
 class neighbor{
 	public:
 		neighbor();
