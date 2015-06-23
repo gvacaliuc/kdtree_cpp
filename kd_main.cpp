@@ -15,25 +15,24 @@
 
 int main(){
 	
-	/*cnpy::NpyArray arr = cnpy::npy_load("kd_data.npy");	//	Some computers have trouble using cnpy
-	double* arr_data = reinterpret_cast<double*>(arr.data); */
+	cnpy::NpyArray arr = cnpy::npy_load("kd_data-2_18500.npy");	//	Some computers have trouble using cnpy
+	double* arr_data = reinterpret_cast<double*>(arr.data); 
 	
-	int i, j;
-	double arr_data[12] = {2,3,5,4,9,6,4,7,8,1,7,2};
-/*	std::vector<unsigned int> shape;	//If data stored correctly
+	std::vector<unsigned int> shape;	//If data stored correctly
 	shape = arr.shape;
-	int a = shape[0], b = shape[1];
-	const int dim = a, numSamples = b;*/
-
+	int a = shape[0], b = shape[1], i, j;
+	const int dim = a;
+	const int numSamples = b;
+	
 //	Setup for arrayOfNodes
-	const int dim = 2, numSamples = 6;
+//	const int dim = 2, numSamples = 6;
 	std::vector<double> temp (dim);
 	kdnode node_data[numSamples];
 
 //  Initializes arrayOfNodes
 	for (i = 0; i < numSamples; i++){
 		for (j = 0; j < dim; j++){
-			temp[j] = arr_data[i*dim + j];
+			temp[j] = arr_data[i + j*numSamples];
 		}
 		node_data[i] = kdnode(temp, i, dim);
 	}
@@ -45,22 +44,21 @@ int main(){
 	
 //	Builds Tree
 	tree.build();
-
+	printf("----- Built Tree -----\n");
 //	Prints Tree 
-	tree.printTree();
+	//tree.printTree();
 
 //	Instantiates a point to find NN of
-	std::vector<double> point (2);
-	point[0] = 6.0;
-	point[1] = 2.0;
-
+	int numneigh = 31;
 //	Finds indices of tree where the NN are located, nearest first
-	std::vector<int> nn_indices = tree.getNN(4, point, 2);
+	neighborArray nn = tree.getNN(numneigh, 24);
 
 // Prints node's point value and index
-	for (i = 0; i < 4; i++){
-		tree.getNode(nn_indices[i]).printPointVal();
-		printf("Index %u: %2u\n", i+1, nn_indices[i]); 	
+	for (i = 0; i < numneigh; i++){
+		//printf("idx %u ", i);
+		//tree.getNode(i).printPointVal();
+		printf("Dist: %2.8f\n", nn[i].getDist());
+		printf("Neighbor %u has index: %2u\n", i+1, nn[i].getIdx()); 	
 	}
 	return 0;
 }

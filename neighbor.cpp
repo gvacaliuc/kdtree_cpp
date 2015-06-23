@@ -104,15 +104,23 @@ void neighborArray::insert(neighbor n){
 		this->sortNeighbors();
 	}
 	else{
-		int i, numneigh = this->neighbors.size();
+		int i, numneigh = this->neighbors.size(), idx = n.getIdx();
+		bool duplicate = false;
 		for (i = 0; i < numneigh; i++){
-			if ( n.getIdx() == this->neighbors[i].getIdx() ){ break; }
-			else if ( n.getDist() < this->neighbors[i].getDist() ){
-				this->neighbors.insert( (this->neighbors.begin() + i), n);
-				this->neighbors.pop_back();
+			if ( idx == this->neighbors[i].getIdx() ){
+				duplicate = true;
 				break;
 			}
 		}
+		if (!duplicate){
+			for (i = 0; i < numneigh; i++){
+				if ( n.getDist() < this->neighbors[i].getDist() ){
+					this->neighbors.insert( (this->neighbors.begin() + i), n);
+					this->neighbors.pop_back();
+					break;
+				}
+			}
+		}	
 	}
 };
 
