@@ -11,11 +11,13 @@
 	shared object that is readable/implementable (words?) in python.
 
 	- Gabriel Vacaliuc - edited - 06/22/15
+
+	The code proved far too slow to be useful, so this is the final step with this code.
 */
 
 int main(){
 	
-	cnpy::NpyArray arr = cnpy::npy_load("kd_data-2_18500.npy");	//	Some computers have trouble using cnpy
+	cnpy::NpyArray arr = cnpy::npy_load("icacoffskbh_30.npy");	//	Some computers have trouble using cnpy
 	double* arr_data = reinterpret_cast<double*>(arr.data); 
 	
 	std::vector<unsigned int> shape;	//If data stored correctly
@@ -54,11 +56,13 @@ int main(){
 	neighborArray nn = tree.getNN(numneigh, 24);
 
 // Prints node's point value and index
-	for (i = 0; i < numneigh; i++){
-		//printf("idx %u ", i);
-		//tree.getNode(i).printPointVal();
-		printf("Dist: %2.8f\n", nn[i].getDist());
-		printf("Neighbor %u has index: %2u\n", i+1, nn[i].getIdx()); 	
+	for (i = 0; i < numSamples; i++){
+		neighborArray nn = tree.getNN(numneigh,i);
+		for (j = 0; j < numneigh; j++){
+			printf("%f\n", nn[j].getDist() );
+			printf("%i\n", nn[j].getIdx() );
+		}
 	}
+	
 	return 0;
 }
