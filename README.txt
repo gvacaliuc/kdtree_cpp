@@ -16,4 +16,4 @@ To compile, run:
 This is assuming you have installed cnpy correctly and are using it.  Otherwise,
 comment out the cnpy lines and input your data.
 
-- Gabriel Vacaliuc - edited - 06/22/15
+- Gabriel Vacaliuc - edited - 04/11/16
